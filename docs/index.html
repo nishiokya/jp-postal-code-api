@@ -1,78 +1,54 @@
 <!doctype html>
-<html lang="ja" prefix="og: http://ogp.me/ns#">
+<html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>日本の郵便番号API | 住所自動補完デモ</title>
-  <meta name="description" content="郵便番号から住所を自動補完するデモ。ttskch/jp-postal-code-api を利用。">
-  <link rel="canonical" href="https://jp-postal-code-api.ttskch.com">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>日本の郵便番号API | 3桁分割＋autoComplete.js</title>
 
-  <!-- OGP / Twitter -->
-  <meta property="og:title" content="日本の郵便番号API | 住所自動補完デモ">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://jp-postal-code-api.ttskch.com">
-  <meta name="twitter:card" content="summary">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- autoComplete.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/autoComplete.min.js"></script>
+
   <style>
-    #grid { display: grid; grid-template-rows: auto 1fr auto; min-height: 100vh; }
-    p { margin-bottom: 0.5rem; }
-    pre { white-space: pre-wrap; }
-    .visually-hidden:not(caption) { position: absolute !important; }
+    #grid { display:grid; grid-template-rows:auto 1fr auto; min-height:100vh; }
+    .ac-group { max-width: 420px; }
+    input[type="text"].zip { ime-mode: disabled; }
   </style>
 </head>
 <body>
 <div id="grid">
-  <nav class="navbar static bg-primary-subtle">
-    <div class="container">
-      <a class="navbar-brand" href="/">日本の郵便番号API</a>
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="https://github.com/ttskch/jp-postal-code-api" target="_blank" rel="noopener">
-            <i class="fa-brands fa-github fa-2x"></i>
-          </a>
-        </li>
-      </ul>
-    </div>
+  <nav class="navbar bg-primary-subtle">
+    <div class="container"><span class="navbar-brand">日本の郵便番号API</span></div>
   </nav>
 
-  <main class="container mt-3 mt-lg-5">
-
-    <!-- 郵便番号入力 -->
-    <form id="form" class="row row-cols-lg-auto g-3 align-items-end" autocomplete="on">
+  <main class="container mt-4">
+    <!-- 郵便番号 3桁 + 4桁 -->
+    <form id="form" class="row g-3 align-items-end" autocomplete="on">
       <div class="col-12">
-        <label class="form-label" for="postal-code">郵便番号</label>
-        <div class="input-group">
+        <label class="form-label" for="zip3">郵便番号</label>
+        <div class="input-group ac-group">
           <span class="input-group-text">〒</span>
-          <input type="search" class="form-control" id="postal-code"
-                 inputmode="numeric" autocomplete="postal-code"
-                 placeholder="例：1000014 または 100-0014"
-                 required pattern="(\d{7}|\d{3}-\d{4})">
+          <input id="zip3" class="form-control zip" type="text" inputmode="numeric" pattern="\d{3}" maxlength="3"
+                 placeholder="3桁（例：100）" autocomplete="postal-code" aria-label="郵便番号3桁" required>
+          <span class="input-group-text">-</span>
+          <input id="zip4" class="form-control zip" type="text" inputmode="numeric" pattern="\d{4}" maxlength="4"
+                 placeholder="4桁（例：0014）" aria-label="郵便番号4桁" required>
+          <button class="btn btn-primary" id="fetch-btn" type="submit">
+            住所を取得
+            <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+          </button>
         </div>
-        <div class="form-text">半角数字7桁（ハイフン可）</div>
-      </div>
-      <div class="col-12">
-        <button type="submit" id="fetch-btn" class="btn btn-primary">
-          住所を取得
-          <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-        </button>
-      </div>
-      <div class="col-12">
-        <div id="msg" class="text-secondary" role="status" aria-live="polite"></div>
+        <div class="form-text">3桁を選ぶ/入力 → 4桁入力で自動検索（送信でも可）</div>
+        <div id="msg" class="text-secondary mt-1" aria-live="polite"></div>
       </div>
     </form>
 
     <!-- 住所フォーム -->
-    <section class="mt-4">
+    <section class="mt-3">
       <div class="row g-3">
-        <div class="col-12">
-          <label for="candidate" class="form-label">候補（複数ある場合）</label>
-          <select id="candidate" class="form-select" hidden></select>
-        </div>
-
         <div class="col-12 col-md-3">
           <label for="pref" class="form-label">都道府県</label>
           <input id="pref" class="form-control" autocomplete="address-level1">
@@ -90,173 +66,231 @@
           <input id="line2" class="form-control" autocomplete="address-line2" placeholder="例：〇〇ビル 101号室">
         </div>
       </div>
-      <div class="form-text mt-2">
-        ※ `住所（英語）` が必要な場合は <code>en.prefecture / en.address1-4</code> を使って整形できます（大口事業所個別番号は英語が空になる仕様）。 [oai_citation:2‡GitHub](https://github.com/ttskch/jp-postal-code-api)
-      </div>
     </section>
 
-    <!-- デバッグ表示（お好みで） -->
+    <!-- 候補検索（郵便番号→住所が複数のとき表示） -->
+    <section id="ac-section" class="mt-4 d-none">
+      <label class="form-label" for="addr-ac">候補を検索（町域・事業所名などで絞り込み）</label>
+      <input id="addr-ac" class="form-control" type="search" placeholder="例：永田町、霞が関、〇〇株式会社 など" />
+      <div class="form-text">候補が複数ある場合のみ表示されます。</div>
+    </section>
+
+    <!-- デバッグ（任意） -->
     <details class="mt-4">
       <summary class="mb-2">レスポンス確認（デバッグ用）</summary>
       <div id="result" class="d-none">
-        <div class="card mb-2">
-          <div class="card-body">
-            エンドポイント：<a id="endpoint" target="_blank" rel="noopener"></a>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body"><pre id="response" class="mb-0"></pre></div>
-        </div>
+        <div class="card mb-2"><div class="card-body">
+          エンドポイント：<a id="endpoint" target="_blank" rel="noopener"></a>
+        </div></div>
+        <div class="card"><div class="card-body"><pre id="response" class="mb-0"></pre></div></div>
       </div>
     </details>
-
-    <script>
-      // ===== 設定 =====
-      const BASE = 'https://nishiokya.github.io/jp-postal-code-api/api/v1/'; // 本家に切替えるなら https://jp-postal-code-api.ttskch.com/api/v1/
-      // ===== DOM 取得 =====
-      const $form = document.getElementById('form');
-      const $zip = document.getElementById('postal-code');
-      const $msg = document.getElementById('msg');
-      const $btn = document.getElementById('fetch-btn');
-      const $spinner = document.getElementById('spinner');
-      const $endpoint = document.getElementById('endpoint');
-      const $response = document.getElementById('response');
-      const $result = document.getElementById('result');
-
-      const $candidate = document.getElementById('candidate');
-      const $pref = document.getElementById('pref');
-      const $city = document.getElementById('city');
-      const $line1 = document.getElementById('line1');
-      const $line2 = document.getElementById('line2');
-
-      let latestRequestId = 0; // レース条件回避用
-
-      function normZip(v) { return (v || '').replace(/[^\d]/g, ''); }
-      function setLoading(loading) {
-        $btn.disabled = loading;
-        $spinner.classList.toggle('d-none', !loading);
-      }
-      function showMsg(text, type='secondary') {
-        $msg.className = `text-${type}`;
-        $msg.textContent = text || '';
-      }
-      function clearAddress() {
-        $pref.value = ''; $city.value = ''; $line1.value = ''; /* $line2 は残す */
-      }
-      function joinJaAddress(ja) {
-        // 候補表示用の短い日本語住所
-        return `${ja.prefecture}${ja.address1}${ja.address2}${ja.address3}${ja.address4}`.replace(/\s+/g,'');
-      }
-      function fillFromRecord(rec) {
-        // ja を優先してフォームに反映
-        const ja = rec?.ja || {};
-        $pref.value = ja.prefecture || '';
-        $city.value = ja.address1 || '';
-        // 町域（address2）＋ 丁目・番地など（address3）を 1行にまとめる
-        const town = [ja.address2, ja.address3].filter(Boolean).join('');
-        $line1.value = town || '';
-        // 事業所名などが address4 に入る場合があるが、多くのフォームでは任意扱いのため line2 にヒントとして残す
-        if (ja.address4 && !$line2.value) $line2.placeholder = ja.address4;
-      }
-
-      function populateCandidates(addresses) {
-        if (!addresses || addresses.length <= 1) {
-          $candidate.hidden = true;
-          $candidate.replaceChildren();
-          return;
-        }
-        $candidate.hidden = false;
-        $candidate.replaceChildren(...addresses.map((rec, i) => {
-          const opt = document.createElement('option');
-          opt.value = String(i);
-          opt.textContent = joinJaAddress(rec.ja);
-          return opt;
-        }));
-        $candidate.selectedIndex = 0;
-      }
-
-      async function fetchAndFill(zip) {
-        const z = normZip(zip);
-        if (z.length !== 7) {
-          showMsg('7桁の郵便番号を入力してください。', 'muted');
-          return;
-        }
-        setLoading(true);
-        showMsg('検索中…', 'secondary');
-        clearAddress();
-        const reqId = ++latestRequestId;
-        const url = `${BASE}${z}.json`;
-
-        try {
-          const res = await fetch(url, { cache: 'no-store' });
-          // デバッグパネル
-          if ($endpoint) { $endpoint.href = url; $endpoint.textContent = url; $result.classList.remove('d-none'); }
-          if ($response) { $response.textContent = ''; }
-
-          if (reqId !== latestRequestId) return; // 入力が先に更新された場合は捨てる
-
-          if (res.ok) {
-            const data = await res.json();
-            if ($response) $response.textContent = JSON.stringify(data, null, 2);
-            const addrs = data?.addresses || [];
-            if (!addrs.length) {
-              showMsg('該当する住所が見つかりませんでした。', 'danger');
-              return;
-            }
-            populateCandidates(addrs);
-            fillFromRecord(addrs[0]);
-            showMsg('住所を自動補完しました。', 'success');
-          } else if (res.status === 404) {
-            if ($response) $response.textContent = '該当する住所が見つかりませんでした。';
-            showMsg('該当する住所が見つかりませんでした。', 'warning');
-          } else {
-            if ($response) $response.textContent = 'エラーが発生しました。';
-            showMsg('エラーが発生しました。時間をおいて再試行してください。', 'danger');
-          }
-        } catch (e) {
-          showMsg('ネットワークエラーが発生しました。', 'danger');
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      // 郵便番号 7桁に達したら自動検索（submit不要）
-      let timer;
-      $zip.addEventListener('input', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          const z = normZip($zip.value);
-          if (z.length === 7) fetchAndFill(z);
-        }, 250);
-      });
-
-      // フォーム送信でも検索できるようにしておく
-      $form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        fetchAndFill($zip.value);
-      });
-
-      // 候補切替
-      $candidate.addEventListener('change', () => {
-        const json = $response?.textContent ? JSON.parse($response.textContent) : null;
-        const addrs = json?.addresses || [];
-        const idx = Number($candidate.value) || 0;
-        if (addrs[idx]) {
-          fillFromRecord(addrs[idx]);
-          showMsg('候補を切り替えました。', 'secondary');
-        }
-      });
-
-      // --- 参考：英語表記を使いたい場合の整形例 ---
-      // const en = rec.en; // prefecture / address1-4
-      // const line = [en.address2, en.address3, en.address4].filter(Boolean).join(', ');
-      // const english = `${en.address1}, ${line}, ${en.prefecture}, ${data.postalCode}, Japan`;
-      // ※ 大口事業所個別番号など英語が空のケースあり（仕様）。 [oai_citation:3‡GitHub](https://github.com/ttskch/jp-postal-code-api)
-    </script>
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<!-- JS（Bootstrap） -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // ===== 設定 =====
+  const BASE = 'https://nishiokya.github.io/jp-postal-code-api/api/v1/';      // APIのベース
+  const SUGGEST_URL = './zip_suggest_digit3.txt';                               // 3桁候補ファイルのパスを合わせてください
+
+  // ===== DOM =====
+  const $form = document.getElementById('form');
+  const $zip3 = document.getElementById('zip3');
+  const $zip4 = document.getElementById('zip4');
+  const $btn = document.getElementById('fetch-btn');
+  const $spinner = document.getElementById('spinner');
+  const $msg = document.getElementById('msg');
+
+  const $pref = document.getElementById('pref');
+  const $city = document.getElementById('city');
+  const $line1 = document.getElementById('line1');
+  const $line2 = document.getElementById('line2');
+
+  const $acSection = document.getElementById('ac-section');
+  const $addrAc = document.getElementById('addr-ac');
+
+  const $endpoint = document.getElementById('endpoint');
+  const $response = document.getElementById('response');
+  const $result = document.getElementById('result');
+
+  // 状態
+  let latestRequestId = 0;
+  let addressCache = []; // [{label, rec}]
+
+  // ===== Utils =====
+  const onlyDigits = s => (s || '').replace(/\D/g, '');
+  const setLoading = b => { $btn.disabled = b; $spinner.classList.toggle('d-none', !b); };
+  const showMsg = (t, type='secondary') => { $msg.className = `text-${type}`; $msg.textContent = t || ''; };
+  const clearAddress = () => { $pref.value=''; $city.value=''; $line1.value=''; /* line2は残す */ };
+  const joinJa = ja => `${ja.prefecture}${ja.address1}${ja.address2}${ja.address3}${ja.address4}`.replace(/\s+/g,'');
+
+  function fillFromRecord(rec) {
+    const ja = rec?.ja || {};
+    $pref.value = ja.prefecture || '';
+    $city.value = ja.address1 || '';
+    const town = [ja.address2, ja.address3].filter(Boolean).join('');
+    $line1.value = town || '';
+    if (ja.address4 && !$line2.value) $line2.placeholder = ja.address4;
+  }
+
+  function fullZip() {
+    const a = onlyDigits($zip3.value).padEnd(3,'').slice(0,3);
+    const b = onlyDigits($zip4.value).padEnd(4,'').slice(0,4);
+    return (a.length===3 && b.length===4) ? a + b : '';
+  }
+
+  // ===== 3桁候補（autoComplete.js） =====
+  let zip3List = [];
+  async function loadZip3Suggestions() {
+    try {
+      const res = await fetch(SUGGEST_URL, { cache: 'no-store' });
+      const text = await res.text();
+      zip3List = text.split(/\r?\n/).map(s => s.trim()).filter(s => /^\d{3}$/.test(s));
+      // autoComplete 初期化
+      new autoComplete({
+        selector: "#zip3",
+        placeHolder: "3桁（例：100）",
+        data: { src: zip3List, cache: true },
+        threshold: 0,
+        searchEngine: "loose",
+        resultsList: { maxResults: 20, tabSelect: true },
+        resultItem: { highlight: true }
+      });
+      document.querySelector("#zip3").addEventListener("selection", (ev) => {
+        const v = ev.detail.selection.value;
+        $zip3.value = v;
+        $zip4.focus();
+        maybeFetch();
+      });
+    } catch (e) {
+      console.warn('zip3 suggest load failed', e);
+    }
+  }
+
+  // ===== 郵便番号→候補取得 =====
+  async function fetchByZip(zip) {
+    setLoading(true);
+    showMsg('検索中…', 'secondary');
+    clearAddress();
+    addressCache = [];
+    const reqId = ++latestRequestId;
+    const url = `${BASE}${zip}.json`;
+
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if ($endpoint) { $endpoint.href = url; $endpoint.textContent = url; $result.classList.remove('d-none'); }
+      if ($response) $response.textContent = '';
+
+      if (reqId !== latestRequestId) return;
+
+      if (!res.ok) {
+        const notFound = res.status === 404;
+        if ($response) $response.textContent = notFound ? '該当する住所が見つかりませんでした。' : 'エラーが発生しました。';
+        showMsg(notFound ? '該当する住所が見つかりませんでした。' : 'エラーが発生しました。', notFound ? 'warning' : 'danger');
+        $acSection.classList.add('d-none');
+        return;
+      }
+
+      const data = await res.json();
+      if ($response) $response.textContent = JSON.stringify(data, null, 2);
+      const list = data?.addresses || [];
+      if (!list.length) {
+        showMsg('該当する住所が見つかりませんでした。', 'warning');
+        $acSection.classList.add('d-none');
+        return;
+      }
+
+      addressCache = list.map(rec => ({ label: joinJa(rec.ja), rec }));
+
+      if (addressCache.length === 1) {
+        fillFromRecord(addressCache[0].rec);
+        $acSection.classList.add('d-none');
+        showMsg('住所を自動補完しました。', 'success');
+      } else {
+        // 住所候補用 autoComplete をその場で準備（初期化は1回でOK）
+        if (!$addrAc.dataset.inited) {
+          const ac = new autoComplete({
+            selector: "#addr-ac",
+            placeHolder: "候補を検索",
+            data: {
+              src: async (q) => {
+                const norm = (s) => (s || '').normalize('NFKC');
+                const qq = norm(q || '');
+                return qq ? addressCache.filter(x => norm(x.label).includes(qq)) : addressCache;
+              },
+              keys: ["label"],
+              cache: false
+            },
+            threshold: 0,
+            searchEngine: "loose",
+            resultsList: { maxResults: 30, tabSelect: true },
+            resultItem: { highlight: true }
+          });
+          document.querySelector("#addr-ac").addEventListener("selection", (event) => {
+            const item = event.detail.selection.value;
+            fillFromRecord(item.rec);
+            event.target.value = item.label;
+            showMsg('候補を反映しました。', 'success');
+          });
+          $addrAc.dataset.inited = '1';
+        }
+        $acSection.classList.remove('d-none');
+        showMsg(`候補が ${addressCache.length} 件見つかりました。検索して選択してください。`, 'secondary');
+      }
+    } catch (e) {
+      showMsg('ネットワークエラーが発生しました。', 'danger');
+      $acSection.classList.add('d-none');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // 両方そろったら実行
+  function maybeFetch() {
+    const zip = fullZip();
+    if (zip) fetchByZip(zip);
+  }
+
+  // ===== 入力ハンドラ =====
+  // 数字以外を除去・桁そろいでフォーカス遷移
+  function sanitizeZipInput(el, max) {
+    const before = el.value;
+    el.value = onlyDigits(before).slice(0, max);
+  }
+  $zip3.addEventListener('input', () => {
+    sanitizeZipInput($zip3, 3);
+    if ($zip3.value.length === 3) $zip4.focus();
+  });
+  $zip4.addEventListener('input', () => {
+    sanitizeZipInput($zip4, 4);
+    if ($zip4.value.length === 4) maybeFetch();
+  });
+
+  // フル郵便番号のペースト対応（どちらに貼ってもOK）
+  function pasteHandler(ev) {
+    const data = (ev.clipboardData || window.clipboardData).getData('text');
+    const d = onlyDigits(data);
+    if (/^\d{7}$/.test(d)) {
+      ev.preventDefault();
+      $zip3.value = d.slice(0,3);
+      $zip4.value = d.slice(3);
+      maybeFetch();
+    }
+  }
+  $zip3.addEventListener('paste', pasteHandler);
+  $zip4.addEventListener('paste', pasteHandler);
+
+  // 送信ボタンでも検索
+  $form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    maybeFetch();
+  });
+
+  // 初期ロード：3桁候補を取得
+  loadZip3Suggestions();
+</script>
 </body>
 </html>
