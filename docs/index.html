@@ -3,42 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>日本の郵便番号API</title>
-  <meta name="description" content="この郵便番号APIは、日本郵便によって公開されているデータを元に、GitHub Pagesを使用して静的なJSONファイルとして配信しています。そのため可用性が高く、またオープンソースなのでクライアントワークでも安心して使用できます。郵便番号から英語の住所を取得することも可能です。ただし、大口事業所個別番号は英語には対応していません。なお、このAPIの配信データはGitHub Actionsを使用して毎日最新の内容に更新しています。">
+  <title>日本の郵便番号API | 住所自動補完デモ</title>
+  <meta name="description" content="郵便番号から住所を自動補完するデモ。ttskch/jp-postal-code-api を利用。">
   <link rel="canonical" href="https://jp-postal-code-api.ttskch.com">
 
-  <!-- @see https://ogp.me/ -->
-  <!-- required -->
-  <meta property="og:title" content="日本の郵便番号API">
+  <!-- OGP / Twitter -->
+  <meta property="og:title" content="日本の郵便番号API | 住所自動補完デモ">
   <meta property="og:type" content="website">
-  <!--meta property="og:image" content=""-->
   <meta property="og:url" content="https://jp-postal-code-api.ttskch.com">
-  <meta property="fb:app_id" content="">
-  <!-- optional -->
-  <meta property="og:description" content="この郵便番号APIは、日本郵便によって公開されているデータを元に、GitHub Pagesを使用して静的なJSONファイルとして配信しています。そのため可用性が高く、またオープンソースなのでクライアントワークでも安心して使用できます。郵便番号から英語の住所を取得することも可能です。ただし、大口事業所個別番号は英語には対応していません。なお、このAPIの配信データはGitHub Actionsを使用して毎日最新の内容に更新しています。">
-  <meta property="og:site_name" content="日本の郵便番号API">
-
-  <!-- @see https://developer.twitter.com/en/docs/tweets/optimize-with-cards/guides/getting-started -->
-  <!-- required -->
   <meta name="twitter:card" content="summary">
-  <!-- optional -->
-  <meta name="twitter:site" content="@ttskch">
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
-    #grid {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: 100vh;
-    }
-    p {
-      margin-bottom: 0.5rem;
-    }
-    pre {
-      white-space: pre-wrap;
-    }
+    #grid { display: grid; grid-template-rows: auto 1fr auto; min-height: 100vh; }
+    p { margin-bottom: 0.5rem; }
+    pre { white-space: pre-wrap; }
+    .visually-hidden:not(caption) { position: absolute !important; }
   </style>
 </head>
 <body>
@@ -48,68 +31,232 @@
       <a class="navbar-brand" href="/">日本の郵便番号API</a>
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" href="https://github.com/ttskch/jp-postal-code-api" target="_blank"><i class="fa-brands fa-github fa-2x"></i></a>
+          <a class="nav-link" href="https://github.com/ttskch/jp-postal-code-api" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github fa-2x"></i>
+          </a>
         </li>
       </ul>
     </div>
   </nav>
+
   <main class="container mt-3 mt-lg-5">
-    <div class="mb-4 mb-lg-5">
-      <p>日本の郵便番号から住所のデータを取得できるWeb APIのデモ画面です。</p>
-      <p>詳しくは <a href="https://github.com/ttskch/jp-postal-code-api" target="_blank">GitHubリポジトリ</a> をご参照ください。</p>
-    </div>
-    <form id="form" class="row row-cols-lg-auto g-3 align-items-center">
+
+    <!-- 郵便番号入力 -->
+    <form id="form" class="row row-cols-lg-auto g-3 align-items-end" autocomplete="on">
       <div class="col-12">
-        <label class="visually-hidden" for="postal-code">郵便番号</label>
+        <label class="form-label" for="postal-code">郵便番号</label>
         <div class="input-group">
-          <div class="input-group-text">〒</div>
-          <input type="search" class="form-control" id="postal-code" placeholder="例：1000014" required pattern="(\d{7}|\d{3}-\d{4})">
+          <span class="input-group-text">〒</span>
+          <input type="search" class="form-control" id="postal-code"
+                 inputmode="numeric" autocomplete="postal-code"
+                 placeholder="例：1000014 または 100-0014"
+                 required pattern="(\d{7}|\d{3}-\d{4})">
         </div>
+        <div class="form-text">半角数字7桁（ハイフン可）</div>
       </div>
       <div class="col-12">
-        <button type="submit" class="btn btn-primary">住所を取得</button>
+        <button type="submit" id="fetch-btn" class="btn btn-primary">
+          住所を取得
+          <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="col-12">
+        <div id="msg" class="text-secondary" role="status" aria-live="polite"></div>
       </div>
     </form>
-    <div id="result" class="mt-3 d-none">
-      <div class="card mb-2">
-        <div class="card-body">
-          エンドポイント：<a id="endpoint" target="_blank"></a>
+
+    <!-- 住所フォーム -->
+    <section class="mt-4">
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="candidate" class="form-label">候補（複数ある場合）</label>
+          <select id="candidate" class="form-select" hidden></select>
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label for="pref" class="form-label">都道府県</label>
+          <input id="pref" class="form-control" autocomplete="address-level1">
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="city" class="form-label">市区町村</label>
+          <input id="city" class="form-control" autocomplete="address-level2">
+        </div>
+        <div class="col-12 col-md-5">
+          <label for="line1" class="form-label">町域・丁目</label>
+          <input id="line1" class="form-control" autocomplete="address-line1" placeholder="例：永田町1-1 など">
+        </div>
+        <div class="col-12">
+          <label for="line2" class="form-label">建物名・部屋番号（任意）</label>
+          <input id="line2" class="form-control" autocomplete="address-line2" placeholder="例：〇〇ビル 101号室">
         </div>
       </div>
-      <div class="card">
-        <div class="card-body">
-          <pre id="response" class="mb-0"></pre>
+      <div class="form-text mt-2">
+        ※ `住所（英語）` が必要な場合は <code>en.prefecture / en.address1-4</code> を使って整形できます（大口事業所個別番号は英語が空になる仕様）。 [oai_citation:2‡GitHub](https://github.com/ttskch/jp-postal-code-api)
+      </div>
+    </section>
+
+    <!-- デバッグ表示（お好みで） -->
+    <details class="mt-4">
+      <summary class="mb-2">レスポンス確認（デバッグ用）</summary>
+      <div id="result" class="d-none">
+        <div class="card mb-2">
+          <div class="card-body">
+            エンドポイント：<a id="endpoint" target="_blank" rel="noopener"></a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body"><pre id="response" class="mb-0"></pre></div>
         </div>
       </div>
-    </div>
+    </details>
+
     <script>
-      document.querySelector('#form').addEventListener('submit', async (e) => {
-        e.preventDefault()
-        const postalCode = document.querySelector('#postal-code').value.replace('-', '')
-        const endpoint = `https://jp-postal-code-api.ttskch.com/api/v1/${postalCode}.json`
-        const res = await fetch(endpoint)
-        const $endpoint = document.querySelector('#endpoint')
-        const $response = document.querySelector('#response')
-        $endpoint.setAttribute('href', endpoint)
-        $endpoint.textContent = endpoint
-        if (res.ok) {
-          $response.textContent = JSON.stringify(await res.json(), null, 2)
-        } else if (res.status === 404) {
-          $response.textContent = '該当する住所が見つかりませんでした。'
-        } else {
-          $response.textContent = 'エラーが発生しました。'
+      // ===== 設定 =====
+      const BASE = 'https://nishiokya.github.io/jp-postal-code-api/api/v1/'; // 本家に切替えるなら https://jp-postal-code-api.ttskch.com/api/v1/
+      // ===== DOM 取得 =====
+      const $form = document.getElementById('form');
+      const $zip = document.getElementById('postal-code');
+      const $msg = document.getElementById('msg');
+      const $btn = document.getElementById('fetch-btn');
+      const $spinner = document.getElementById('spinner');
+      const $endpoint = document.getElementById('endpoint');
+      const $response = document.getElementById('response');
+      const $result = document.getElementById('result');
+
+      const $candidate = document.getElementById('candidate');
+      const $pref = document.getElementById('pref');
+      const $city = document.getElementById('city');
+      const $line1 = document.getElementById('line1');
+      const $line2 = document.getElementById('line2');
+
+      let latestRequestId = 0; // レース条件回避用
+
+      function normZip(v) { return (v || '').replace(/[^\d]/g, ''); }
+      function setLoading(loading) {
+        $btn.disabled = loading;
+        $spinner.classList.toggle('d-none', !loading);
+      }
+      function showMsg(text, type='secondary') {
+        $msg.className = `text-${type}`;
+        $msg.textContent = text || '';
+      }
+      function clearAddress() {
+        $pref.value = ''; $city.value = ''; $line1.value = ''; /* $line2 は残す */
+      }
+      function joinJaAddress(ja) {
+        // 候補表示用の短い日本語住所
+        return `${ja.prefecture}${ja.address1}${ja.address2}${ja.address3}${ja.address4}`.replace(/\s+/g,'');
+      }
+      function fillFromRecord(rec) {
+        // ja を優先してフォームに反映
+        const ja = rec?.ja || {};
+        $pref.value = ja.prefecture || '';
+        $city.value = ja.address1 || '';
+        // 町域（address2）＋ 丁目・番地など（address3）を 1行にまとめる
+        const town = [ja.address2, ja.address3].filter(Boolean).join('');
+        $line1.value = town || '';
+        // 事業所名などが address4 に入る場合があるが、多くのフォームでは任意扱いのため line2 にヒントとして残す
+        if (ja.address4 && !$line2.value) $line2.placeholder = ja.address4;
+      }
+
+      function populateCandidates(addresses) {
+        if (!addresses || addresses.length <= 1) {
+          $candidate.hidden = true;
+          $candidate.replaceChildren();
+          return;
         }
-        document.querySelector('#result').classList.remove('d-none')
-      })
+        $candidate.hidden = false;
+        $candidate.replaceChildren(...addresses.map((rec, i) => {
+          const opt = document.createElement('option');
+          opt.value = String(i);
+          opt.textContent = joinJaAddress(rec.ja);
+          return opt;
+        }));
+        $candidate.selectedIndex = 0;
+      }
+
+      async function fetchAndFill(zip) {
+        const z = normZip(zip);
+        if (z.length !== 7) {
+          showMsg('7桁の郵便番号を入力してください。', 'muted');
+          return;
+        }
+        setLoading(true);
+        showMsg('検索中…', 'secondary');
+        clearAddress();
+        const reqId = ++latestRequestId;
+        const url = `${BASE}${z}.json`;
+
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          // デバッグパネル
+          if ($endpoint) { $endpoint.href = url; $endpoint.textContent = url; $result.classList.remove('d-none'); }
+          if ($response) { $response.textContent = ''; }
+
+          if (reqId !== latestRequestId) return; // 入力が先に更新された場合は捨てる
+
+          if (res.ok) {
+            const data = await res.json();
+            if ($response) $response.textContent = JSON.stringify(data, null, 2);
+            const addrs = data?.addresses || [];
+            if (!addrs.length) {
+              showMsg('該当する住所が見つかりませんでした。', 'danger');
+              return;
+            }
+            populateCandidates(addrs);
+            fillFromRecord(addrs[0]);
+            showMsg('住所を自動補完しました。', 'success');
+          } else if (res.status === 404) {
+            if ($response) $response.textContent = '該当する住所が見つかりませんでした。';
+            showMsg('該当する住所が見つかりませんでした。', 'warning');
+          } else {
+            if ($response) $response.textContent = 'エラーが発生しました。';
+            showMsg('エラーが発生しました。時間をおいて再試行してください。', 'danger');
+          }
+        } catch (e) {
+          showMsg('ネットワークエラーが発生しました。', 'danger');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // 郵便番号 7桁に達したら自動検索（submit不要）
+      let timer;
+      $zip.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          const z = normZip($zip.value);
+          if (z.length === 7) fetchAndFill(z);
+        }, 250);
+      });
+
+      // フォーム送信でも検索できるようにしておく
+      $form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetchAndFill($zip.value);
+      });
+
+      // 候補切替
+      $candidate.addEventListener('change', () => {
+        const json = $response?.textContent ? JSON.parse($response.textContent) : null;
+        const addrs = json?.addresses || [];
+        const idx = Number($candidate.value) || 0;
+        if (addrs[idx]) {
+          fillFromRecord(addrs[idx]);
+          showMsg('候補を切り替えました。', 'secondary');
+        }
+      });
+
+      // --- 参考：英語表記を使いたい場合の整形例 ---
+      // const en = rec.en; // prefecture / address1-4
+      // const line = [en.address2, en.address3, en.address4].filter(Boolean).join(', ');
+      // const english = `${en.address1}, ${line}, ${en.prefecture}, ${data.postalCode}, Japan`;
+      // ※ 大口事業所個別番号など英語が空のケースあり（仕様）。 [oai_citation:3‡GitHub](https://github.com/ttskch/jp-postal-code-api)
     </script>
   </main>
-  <footer class="container-fluid bg-body-tertiary">
-    <div class="small text-muted text-end py-3">
-      <div><a href="https://twitter.com/ttskch" target="_blank">@ttskch</a> &copy; 2024</div>
-    </div>
-  </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
