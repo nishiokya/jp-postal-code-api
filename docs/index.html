@@ -94,7 +94,7 @@
 <script>
   // ===== 設定 =====
   const BASE = 'https://nishiokya.github.io/jp-postal-code-api/api/v1/';      // APIのベース
-  const SUGGEST_URL = './api/v1/zip_suggest_digit3.txt';                               // 3桁候補ファイルのパスを合わせてください
+  const SUGGEST_URL = 'https://nishiokya.github.io/jp-postal-code-api/api/v1/suggest/zip3.txt';     // 3桁候補ファイル
 
   // ===== DOM =====
   const $form = document.getElementById('form');
@@ -155,7 +155,7 @@
         placeHolder: "3桁（例：100）",
         data: { src: zip3List, cache: true },
         threshold: 0,
-        searchEngine: "loose",
+        searchEngine: "strict",
         resultsList: { maxResults: 20, tabSelect: true },
         resultItem: { highlight: true }
       });

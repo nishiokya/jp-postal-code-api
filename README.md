@@ -228,7 +228,13 @@ Web APIの配信データは [日本郵便によって公開されているデ�
 https://{あなたのGitHubユーザー名}.github.io/jp-postal-code-api/api/v1/{郵便番号}.json
 ```
 
+
 のようになります。
+
+```
+https://nishiokya.github.io/jp-postal-code-api/api/v1/441-0841.json
+
+```
 
 ただし、それでも悪意ある攻撃者によって大量のリクエストが行われると利用制限の対象になる可能性があります。どうしても心配な場合は、フォークしたリポジトリを [Cloudflare Pages](https://www.cloudflare.com/ja-jp/developer-platform/pages/) などの多機能なホスティングサービスやその他PaaSなどに接続して、BASIC認証などをかけた状態でWeb APIをホストするといった運用を検討してください。
 

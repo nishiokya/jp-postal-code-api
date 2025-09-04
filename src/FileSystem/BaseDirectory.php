@@ -110,4 +110,25 @@ final readonly class BaseDirectory implements BaseDirectoryInterface
 
         return null;
     }
+    public function getRootPath(): string
+    {
+        return rtrim($this->path, '/');
+    }
+
+    public function getJsonRootPath(): string
+    {
+        // JSON を直下に置いているならそのまま
+        return $this->getRootPath();
+        // もしサブディレクトリに置いているなら、例えば:
+        // return $this->getRootPath() . '/json';
+    }
+
+    public function ensureDir(string $relative): string
+    {
+        $abs = $this->getRootPath() . '/' . ltrim($relative, '/');
+        if (!is_dir($abs)) {
+            @mkdir($abs, 0775, true);
+        }
+        return $abs;
+    }
 }
