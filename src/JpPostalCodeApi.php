@@ -9,6 +9,7 @@ use Ttskch\JpPostalCodeApi\Command\BuildCommand;
 use Ttskch\JpPostalCodeApi\Csv\CsvParserInterface;
 use Ttskch\JpPostalCodeApi\DataSource\CsvProviderInterface;
 use Ttskch\JpPostalCodeApi\FileSystem\BaseDirectoryInterface;
+use Ttskch\JpPostalCodeApi\Suggest\SuggestIndexBuilderInterface;
 
 final readonly class JpPostalCodeApi
 {
@@ -20,6 +21,7 @@ final readonly class JpPostalCodeApi
         private CsvParserInterface $kenAllRomeCsvParser,
         private CsvParserInterface $jigyosyoCsvParser,
         private BaseDirectoryInterface $baseDirectory,
+        private SuggestIndexBuilderInterface $suggestBuilder, 
         ?Application $console = null,
     ) {
         $this->console = $console ?? new Application();
@@ -34,6 +36,7 @@ final readonly class JpPostalCodeApi
             $this->kenAllRomeCsvParser,
             $this->jigyosyoCsvParser,
             $this->baseDirectory,
+            $this->suggestBuilder ,
         ));
         $this->console->run();
     }

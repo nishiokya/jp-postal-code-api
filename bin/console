@@ -8,6 +8,7 @@ use Ttskch\JpPostalCodeApi\Csv\KenAll\CsvParser as KenAllCsvParser;
 use Ttskch\JpPostalCodeApi\Csv\KenAllRome\CsvParser as KenAllRomeCsvParser;
 use Ttskch\JpPostalCodeApi\DataSource\CsvProvider;
 use Ttskch\JpPostalCodeApi\FileSystem\BaseDirectory;
+use Ttskch\JpPostalCodeApi\Suggest\SuggestIndexBuilder;
 use Ttskch\JpPostalCodeApi\JpPostalCodeApi;
 
 (new JpPostalCodeApi(
@@ -15,5 +16,6 @@ use Ttskch\JpPostalCodeApi\JpPostalCodeApi;
     new KenAllCsvParser(),
     new KenAllRomeCsvParser(),
     new JigyosyoCsvParser(),
-    new BaseDirectory()
+    new BaseDirectory(),
+    new SuggestIndexBuilder()  
 ))->run();

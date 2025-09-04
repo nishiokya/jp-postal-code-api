@@ -13,6 +13,7 @@ use Ttskch\JpPostalCodeApi\Csv\CsvParserInterface;
 use Ttskch\JpPostalCodeApi\DataSource\CsvProviderInterface;
 use Ttskch\JpPostalCodeApi\DataSource\ZipUrls;
 use Ttskch\JpPostalCodeApi\FileSystem\BaseDirectoryInterface;
+use Ttskch\JpPostalCodeApi\Suggest\SuggestIndexBuilderInterface;
 
 #[AsCommand(
     name: 'build',
@@ -26,6 +27,7 @@ final class BuildCommand extends Command
         readonly private CsvParserInterface $kenAllRomeCsvParser,
         readonly private CsvParserInterface $jigyosyoCsvParser,
         readonly private BaseDirectoryInterface $baseDirectory,
+        readonly private SuggestIndexBuilderInterface $suggestBuilder,
     ) {
         parent::__construct();
     }
@@ -39,6 +41,11 @@ final class BuildCommand extends Command
         $total = $kenAllCsv->count() + $kenAllRomeCsv->count() + $jigyosyoCsv->count();
 
         $io = new SymfonyStyle($input, $output);
+
+        $io->section('Building suggest indices from existing JSON files...');
+        $this->suggestBuilder->build($this->baseDirectory, $io);
+        $io->success('Suggest indices built.');
+
         $io->progressStart($total);
 
         $this->baseDirectory->clear();
@@ -67,6 +74,11 @@ final class BuildCommand extends Command
 
         $io->progressFinish();
         $io->success(sprintf('Finished! %s files are created from %s CSV records.', number_format($this->baseDirectory->countJsonFiles()), number_format($total)));
+
+        $io->section('Building suggest indices...');
+        // 進捗バーは Finder の件数が必要なら2段階に分けてもOK。ここは簡略に。
+        $this->suggestBuilder->build($this->baseDirectory, $io);
+        $io->success('Suggest indices built.');
 
         return Command::SUCCESS;
     }
